@@ -2,9 +2,6 @@ import React, { useState, useEffect } from "react";
 import favicon from "/favicon.ico";
 import "./index.css";
 import "bootstrap/dist/css/bootstrap.min.css";
-import { BsPencilSquare, BsTrash } from "react-icons/bs";
-import { FaPlusCircle } from "react-icons/fa";
-import { FaTrash } from "react-icons/fa";
 import Modal from "./components/modals/Modals.jsx";
 import "bootstrap/dist/js/bootstrap.min.js";
 import { Icons } from "./assets/Icons.jsx";
@@ -31,22 +28,45 @@ export default function App() {
     setTaskName(e.target.value);
   };
 
-  const handleDoneStatus = (index) => {
-    const updatedTodoTasks = [...todoTasks];
-    updatedTodoTasks[index].done = true;
-    // Update task names in local storage
-    localStorage.setItem(
-      "taskNames",
-      JSON.stringify([...updatedTodoTasks, ...doneTasks])
-    );
+  // Handle Status
 
-    setTodoTasks(updatedTodoTasks);
+  // Toggle task status between "Current" and "Done"
+  const handleToggleStatus = (taskId) => {
+    const storedTasks = JSON.parse(localStorage.getItem("taskNames")) || [];
+    const taskToUpdate = storedTasks.find((task) => task.id === taskId);
+    if (!taskToUpdate) return;
+
+    taskToUpdate.done = !taskToUpdate.done;
+
+    // Update local storage
+    localStorage.setItem("taskNames", JSON.stringify(storedTasks));
+
+    // Update state based on task's done status
+    if (taskToUpdate.done) {
+      // Move task to "Done" column
+      setDoneTasks((prevDoneTasks) => [...prevDoneTasks, taskToUpdate]);
+      setTodoTasks((prevTodoTasks) =>
+        prevTodoTasks.filter((task) => task.id !== taskId)
+      );
+    } else {
+      // Move task back to "Current" column
+      setTodoTasks((prevTodoTasks) => [...prevTodoTasks, taskToUpdate]);
+      setDoneTasks((prevDoneTasks) =>
+        prevDoneTasks.filter((task) => task.id !== taskId)
+      );
+    }
+  };
+
+  // Update label class based on task's done status
+  const renderLabelClass = (task) => {
+    return task.done ? "form-check-label done-task" : "form-check-label";
   };
 
   //Local Storage
   const handleSubmit = () => {
     if (taskName.trim() !== "") {
-      const updatedTask = { name: taskName, done: false }; // New task with done status set to false
+      const taskId = new Date().getTime(); // Generate a unique timestamp-based ID
+      const updatedTask = { id: taskId, name: taskName, done: false };
 
       // Add the new task to the appropriate array based on its done status
       const updatedTodoTasks = [...todoTasks, updatedTask];
@@ -65,29 +85,6 @@ export default function App() {
     }
   };
 
-  const renderCheckbox = (task, index) => {
-    if (task.done) {
-      return (
-        <input
-          className="form-check-input"
-          type="checkbox"
-          id={`task${index}Checkbox`}
-          checked
-          disabled
-        />
-      );
-    } else {
-      return (
-        <input
-          className="form-check-input"
-          type="checkbox"
-          id={`task${index}Checkbox`}
-          onChange={() => handleDoneStatus(index)}
-        />
-      );
-    }
-  };
-
   const openModal = () => {
     setModalOpen(true);
   };
@@ -96,6 +93,7 @@ export default function App() {
     document.getElementById("closeAdd").click();
   };
 
+  //Update Task
   const handleUpdate = (index, newName) => {
     const updatedTodoTasks = [...todoTasks];
     updatedTodoTasks[index].name = newName;
@@ -196,7 +194,7 @@ export default function App() {
           </a>
           {/* Add new Task Button */}
           <button
-            className="btn btn-"
+            className="btn btn"
             onClick={openModal}
             type="button"
             id="button-addon2"
@@ -263,15 +261,21 @@ export default function App() {
                     border: "2px solid #9D71BC",
                     boxShadow: "0 0 10px rgba(0, 0, 0, 0.3)",
                   }}
-                  key={index}
+                  key={task.id || index} // Use task.id if available, otherwise fallback to index
                 >
                   <div className="card-body">
                     <div className="d-flex justify-content-between align-items-center">
                       <div className="form-check">
-                        {renderCheckbox(task, index)}
+                        <input
+                          className="form-check-input"
+                          type="checkbox"
+                          id={`task${task.id || index}Checkbox`} // Use task.id if available, otherwise fallback to index
+                          checked={task.done}
+                          onChange={() => handleToggleStatus(task.id)}
+                        />
                         <label
-                          className="form-check-label"
-                          htmlFor={`task${index}Checkbox`}
+                          className={renderLabelClass(task)}
+                          htmlFor={`task${task.id || index}Checkbox`} // Use task.id if available, otherwise fallback to index
                         >
                           {task.name}
                         </label>
@@ -338,21 +342,33 @@ export default function App() {
             </div>
             {/* Done Tasks */}
             <div>
-              {doneTasks.map((task, index) => (
+              {doneTasks.map((task) => (
                 <div
                   className="card mb-3"
                   style={{
                     border: "2px solid #9D71BC",
                     boxShadow: "0 0 10px rgba(0, 0, 0, 0.3)",
                   }}
-                  key={index}
+                  key={task.id}
                 >
                   <div className="card-body">
                     <div className="d-flex justify-content-between align-items-center">
                       <div className="form-check">
-                        {/* Access the correct properties of the task object */}
-                        <label className="form-check-label">{task.name}</label>
+                        <input
+                          className="form-check-input"
+                          type="checkbox"
+                          id={`doneTask${task.id}Checkbox`}
+                          checked={true} // Since it's in the "Done" column, all tasks are considered done
+                          onChange={() => handleToggleStatus(task.id)}
+                        />
+                        <label
+                          className="form-check-label"
+                          htmlFor={`doneTask${task.id}Checkbox`}
+                        >
+                          {task.name}
+                        </label>
                       </div>
+
                       <div>
                         <button
                           type="button"
