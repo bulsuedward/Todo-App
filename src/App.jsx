@@ -11,6 +11,7 @@ export default function App() {
   const [modalOpen, setModalOpen] = useState(false);
   const [todoTasks, setTodoTasks] = useState([]);
   const [doneTasks, setDoneTasks] = useState([]);
+  const [currentTaskId, setCurrentTaskId] = useState(null); // State to hold current task ID being updated
 
   useEffect(() => {
     const storedTasks = JSON.parse(localStorage.getItem("taskNames")) || [];
@@ -28,7 +29,44 @@ export default function App() {
     setTaskName(e.target.value);
   };
 
-  // Handle Status
+  //State for Handling Deleting and Editing Current Task
+  const [selectedTaskId, setSelectedTaskId] = useState(0);
+  const [selectedTask, setSelectedTask] = useState("");
+
+  const handleSelectedId = (taskId, content) => {
+    setSelectedTaskId(taskId);
+    setSelectedTask(content);
+  };
+  //Handle Current Task Delete
+  const handleDeleted = () => {
+    const updatedTask = todoTasks.filter((task) => task.id !== selectedTaskId);
+    setTodoTasks(updatedTask);
+    localStorage.setItem("taskNames", JSON.stringify(updatedTask));
+    document.getElementById("closeDelete").click();
+  };
+  // Handle Done Task Delete
+  const handleDeletedDone = () => {
+    const updatedDoneTasks = doneTasks.filter(
+      (task) => task.id !== selectedTaskId
+    );
+    setDoneTasks(updatedDoneTasks); // Update doneTasks array
+    localStorage.setItem(
+      "taskNames",
+      JSON.stringify([...todoTasks, ...updatedDoneTasks])
+    ); // Update local storage with both todoTasks and updatedDoneTasks
+    document.getElementById("closeDeleteDone").click();
+  };
+
+  // Update Task function
+  const handleUpdate = () => {
+    const editedTodo = selectedTask;
+    const updatedTask = todoTasks.map((task) =>
+      task.id === selectedTaskId ? { ...task, name: editedTodo } : task
+    );
+    setTodoTasks(updatedTask);
+    localStorage.setItem("taskNames", JSON.stringify(updatedTask));
+    document.getElementById("updated").click();
+  };
 
   // Toggle task status between "Current" and "Done"
   const handleToggleStatus = (taskId) => {
@@ -59,7 +97,12 @@ export default function App() {
 
   // Update label class based on task's done status
   const renderLabelClass = (task) => {
-    return task.done ? "form-check-label done-task" : "form-check-label";
+    console.log("Task Done Status:", task.done);
+    const labelClass = task.done
+      ? "form-check-label done-task"
+      : "form-check-label";
+    console.log("Label Class:", labelClass);
+    return labelClass;
   };
 
   //Local Storage
@@ -93,19 +136,6 @@ export default function App() {
     document.getElementById("closeAdd").click();
   };
 
-  //Update Task
-  const handleUpdate = (index, newName) => {
-    const updatedTodoTasks = [...todoTasks];
-    updatedTodoTasks[index].name = newName;
-
-    // Update task names in local storage
-    localStorage.setItem(
-      "taskNames",
-      JSON.stringify([...updatedTodoTasks, ...doneTasks])
-    );
-
-    setTodoTasks(updatedTodoTasks);
-  };
   return (
     <div className="container">
       {/* Add new Task Modal */}
@@ -132,24 +162,35 @@ export default function App() {
         title="Edit Task"
         color="success"
         buttonName="Update"
-        onClick={handleUpdate}
+        onClick={handleUpdate} // Pass taskId and taskName
+        closeBtn="updated"
       >
         <input
           type="text"
-          value={taskName}
-          onChange={handleUpdate}
+          value={selectedTask} // Display current task name in the input field
+          onChange={(e) => setSelectedTask(e.target.value)} // Update taskName state
           className="form-control"
         />
       </Modal>
-      {/* Delete Task Modal */}
+      {/* Delete Current Task Modal */}
       <Modal
         id="deleteModal"
         title="Delete Task"
         color="danger"
         buttonName="Delete"
-        onClick={() => {
-          alert("Deleted");
-        }}
+        onClick={handleDeleted}
+        closeBtn="closeDelete"
+      >
+        <p>Are you sure you want to delete?</p>
+      </Modal>
+      {/* Delete Done Task Modal */}
+      <Modal
+        id="deleteModalDone"
+        title="Delete Task"
+        color="danger"
+        buttonName="Delete"
+        onClick={handleDeletedDone}
+        closeBtn="closeDeleteDone"
       >
         <p>Are you sure you want to delete?</p>
       </Modal>
@@ -269,13 +310,14 @@ export default function App() {
                         <input
                           className="form-check-input"
                           type="checkbox"
-                          id={`task${task.id || index}Checkbox`} // Use task.id if available, otherwise fallback to index
+                          id={`task${task.id || index}Checkbox`}
                           checked={task.done}
                           onChange={() => handleToggleStatus(task.id)}
                         />
+
                         <label
                           className={renderLabelClass(task)}
-                          htmlFor={`task${task.id || index}Checkbox`} // Use task.id if available, otherwise fallback to index
+                          htmlFor={`task${task.id || index}Checkbox`}
                         >
                           {task.name}
                         </label>
@@ -286,6 +328,7 @@ export default function App() {
                           className="btn btn"
                           data-bs-toggle="modal"
                           data-bs-target="#updateModal"
+                          onClick={() => handleSelectedId(task.id, task.name)}
                         >
                           <img
                             src={Icons.ModifyIcon}
@@ -299,6 +342,7 @@ export default function App() {
                           className="btn btn"
                           data-bs-toggle="modal"
                           data-bs-target="#deleteModal"
+                          onClick={() => handleSelectedId(task.id, task.name)}
                         >
                           <img
                             src={Icons.DeleteIcon}
@@ -315,7 +359,7 @@ export default function App() {
             </div>
           </div>
 
-          {/* Done */}
+          {/* Done Task*/}
           <div className="col">
             <div className="card mb-3 lexmeet-border">
               <div className="card-body">
@@ -328,6 +372,7 @@ export default function App() {
                       className="btn ms-2"
                       data-bs-toggle="modal"
                       data-bs-target="#deleteAllModal"
+                      onClick={() => handleSelectedId(task.id, task.name)}
                     >
                       <img
                         src={Icons.DeleteAllIcon}
@@ -374,20 +419,8 @@ export default function App() {
                           type="button"
                           className="btn btn"
                           data-bs-toggle="modal"
-                          data-bs-target="#updateModal"
-                        >
-                          <img
-                            src={Icons.ModifyIcon}
-                            alt="Update Icon"
-                            width="30"
-                            height="30"
-                          />
-                        </button>
-                        <button
-                          type="button"
-                          className="btn btn"
-                          data-bs-toggle="modal"
-                          data-bs-target="#deleteModal"
+                          data-bs-target="#deleteModalDone"
+                          onClick={() => handleSelectedId(task.id, task.name)}
                         >
                           <img
                             src={Icons.DeleteIcon}

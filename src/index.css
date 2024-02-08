@@ -32,5 +32,8 @@
     background-image: linear-gradient(to right, #FF4F6D, #7248E7);
     z-index: -1;
   }
+  .done-task {
+    text-decoration: line-through !important;
+  }
   
   
