@@ -36,6 +36,7 @@ export default function App() {
   const handleSelectedId = (taskId, content) => {
     setSelectedTaskId(taskId);
     setSelectedTask(content);
+    alert(taskId);
   };
   //Handle Current Task Delete
   const handleDeleted = () => {
@@ -108,7 +109,7 @@ export default function App() {
   //Local Storage
   const handleSubmit = () => {
     if (taskName.trim() !== "") {
-      const taskId = new Date().getTime(); // Generate a unique timestamp-based ID
+      const taskId = Math.floor(100 + Math.random() * 900); // Generate a unique timestamp-based ID
       const updatedTask = { id: taskId, name: taskName, done: false };
 
       // Add the new task to the appropriate array based on its done status
