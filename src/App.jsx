@@ -75,6 +75,7 @@ export default function App() {
     setAllTasks(newTasks);
     localStorage.setItem("tasks", JSON.stringify(newTasks));
     document.getElementById("updated").click();
+    setTaskName("");
   };
 
   // Toggle Status
@@ -93,11 +94,6 @@ export default function App() {
   const handleSelectedId = (id, name) => {
     setCurrentTaskId(id);
     setTaskName(name);
-  };
-
-  // Two way binding for task name input
-  const handleTaskNameChange = (e) => {
-    setTaskName(e.target.value);
   };
 
   const openModal = () => {
@@ -122,6 +118,7 @@ export default function App() {
   };
   return (
     <div className="container">
+      {/* -------All Modals Starts Here------- */}
       {/* Add new Task Modal */}
       <Modal
         id="createModal"
@@ -136,7 +133,7 @@ export default function App() {
         <input
           type="text"
           value={taskName} // Binding the input value to taskName state
-          onChange={handleTaskNameChange} // Handling input change event
+          onChange={(e) => setTaskName(e.target.value)} // Handling input change event
           className="form-control"
         />
       </Modal>
@@ -147,6 +144,7 @@ export default function App() {
         color="success"
         buttonName="Update"
         onClick={handleUpdate} // Pass taskId and taskName
+        onClose={(e) => setTaskName("")}
         closeBtn="updated"
       >
         <input
@@ -208,6 +206,9 @@ export default function App() {
       >
         <p>Are you sure you want to delete all done tasks?</p>
       </Modal>
+      {/* -------All Modals Ends Here------- */}
+
+      {/* -------Header------- */}
       <div
         className="navbar d-flex justify-content-between align-items-center"
         style={{ backgroundColor: "#F8FFFE" }}
@@ -255,10 +256,10 @@ export default function App() {
         </div>
       </div>
 
-      {/* Content */}
+      {/* ------- Content Starts Here ------- */}
       <div className="container mt-3">
         <div className="row">
-          {/* Current */}
+          {/* Current Card */}
           <div className="col">
             <div className="card mb-3 lexmeet-border">
               <div className="card-body">
@@ -298,7 +299,7 @@ export default function App() {
                 </div>
               </div>
             </div>
-            {/* Current Tasks */}
+            {/* Current Tasks List */}
             <div>
               {todoTasks.map((task, index) => (
                 <div
@@ -307,7 +308,7 @@ export default function App() {
                     border: "2px solid #9D71BC",
                     boxShadow: "0 0 10px rgba(0, 0, 0, 0.3)",
                   }}
-                  key={task.id || index} // Use task.id if available, otherwise fallback to index
+                  key={task.done ? <del>{task.name}</del> : task.name} // Use task.id if available, otherwise fallback to index
                 >
                   <div className="card-body">
                     <div className="d-flex justify-content-between align-items-center">
@@ -414,6 +415,9 @@ export default function App() {
                         <label
                           className="form-check-label"
                           htmlFor={`doneTask${task.id}Checkbox`}
+                          style={{
+                            textDecoration: task.done ? "line-through" : "none",
+                          }}
                         >
                           {task.name}
                         </label>
