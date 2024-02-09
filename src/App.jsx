@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-unused-vars
 import React, { useState, useEffect } from "react";
 import favicon from "/favicon.ico";
 import "./index.css";
@@ -7,126 +8,96 @@ import "bootstrap/dist/js/bootstrap.min.js";
 import { Icons } from "./assets/Icons.jsx";
 
 export default function App() {
-  const [taskName, setTaskName] = useState("");
+  const [allTasks, setAllTasks] = useState([]); // All tasks
+  const [todoTasks, setTodoTasks] = useState([]); // Current tasks
+  const [doneTasks, setDoneTasks] = useState([]); // Done tasks
   const [modalOpen, setModalOpen] = useState(false);
-  const [todoTasks, setTodoTasks] = useState([]);
-  const [doneTasks, setDoneTasks] = useState([]);
-  const [currentTaskId, setCurrentTaskId] = useState(null); // State to hold current task ID being updated
+  const [doneAllChecked, setDoneAllChecked] = useState(false);
+  const [taskName, setTaskName] = useState(""); // Task name input value
+  const [currentTaskId, setCurrentTaskId] = useState(""); // Task name to be updated
 
+  // const [selectedTaskId, setSelectedTaskId] = useState(""); // Task name to be updated
+  const [selectedTask, setSelectedTask] = useState(""); // Task name to be updated
+  // Get the initial tasks from the local storage
   useEffect(() => {
-    const storedTasks = JSON.parse(localStorage.getItem("taskNames")) || [];
+    const tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+    setAllTasks(tasks);
+  }, []);
 
-    // Separate tasks based on their done status
-    const filteredTodoTasks = storedTasks.filter((task) => !task.done);
-    const filteredDoneTasks = storedTasks.filter((task) => task.done);
+  // Update the current and done tasks when allTasks state changes
+  useEffect(() => {
+    const currentTasks = allTasks.filter((task) => !task.done);
+    const doneTasks = allTasks.filter((task) => task.done);
+    setTodoTasks(currentTasks);
+    setDoneTasks(doneTasks);
+  }, [allTasks]);
 
-    // Update states with filtered tasks
-    setTodoTasks(filteredTodoTasks);
-    setDoneTasks(filteredDoneTasks);
-  }, [localStorage.getItem("taskNames")]);
-
-  const handleTaskNameChange = (e) => {
-    setTaskName(e.target.value);
+  // Add new task
+  const handleSubmit = () => {
+    if (taskName) {
+      const newTask = {
+        id: Math.floor(Math.random() * 1000), // Generate a random id
+        name: taskName,
+        done: false,
+      };
+      const newTasks = [...allTasks, newTask];
+      setAllTasks(newTasks);
+      localStorage.setItem("tasks", JSON.stringify(newTasks));
+      setTaskName(""); // Clear the input field
+      closeModal(); // Close the modal
+    }
   };
 
-  //State for Handling Deleting and Editing Current Task
-  const [selectedTaskId, setSelectedTaskId] = useState(0);
-  const [selectedTask, setSelectedTask] = useState("");
-
-  const handleSelectedId = (taskId, content) => {
-    setSelectedTaskId(taskId);
-    setSelectedTask(content);
-    alert(taskId);
-  };
-  //Handle Current Task Delete
+  // Delete Task
   const handleDeleted = () => {
-    const updatedTask = todoTasks.filter((task) => task.id !== selectedTaskId);
-    setTodoTasks(updatedTask);
-    localStorage.setItem("taskNames", JSON.stringify(updatedTask));
+    const newTasks = allTasks.filter((task) => task.id !== currentTaskId);
+    setAllTasks(newTasks);
+    localStorage.setItem("tasks", JSON.stringify(newTasks));
     document.getElementById("closeDelete").click();
   };
-  // Handle Done Task Delete
+
+  // Delete Done Task
   const handleDeletedDone = () => {
-    const updatedDoneTasks = doneTasks.filter(
-      (task) => task.id !== selectedTaskId
-    );
-    setDoneTasks(updatedDoneTasks); // Update doneTasks array
-    localStorage.setItem(
-      "taskNames",
-      JSON.stringify([...todoTasks, ...updatedDoneTasks])
-    ); // Update local storage with both todoTasks and updatedDoneTasks
+    const newTasks = allTasks.filter((task) => task.id !== currentTaskId);
+    setAllTasks(newTasks);
+    localStorage.setItem("tasks", JSON.stringify(newTasks));
     document.getElementById("closeDeleteDone").click();
   };
 
-  // Update Task function
+  // Update Task
   const handleUpdate = () => {
-    const editedTodo = selectedTask;
-    const updatedTask = todoTasks.map((task) =>
-      task.id === selectedTaskId ? { ...task, name: editedTodo } : task
-    );
-    setTodoTasks(updatedTask);
-    localStorage.setItem("taskNames", JSON.stringify(updatedTask));
+    const newTasks = allTasks.map((task) => {
+      if (task.id === currentTaskId) {
+        return { ...task, name: selectedTask };
+      }
+      return task;
+    });
+    setAllTasks(newTasks);
+    localStorage.setItem("tasks", JSON.stringify(newTasks));
     document.getElementById("updated").click();
   };
 
-  // Toggle task status between "Current" and "Done"
-  const handleToggleStatus = (taskId) => {
-    const storedTasks = JSON.parse(localStorage.getItem("taskNames")) || [];
-    const taskToUpdate = storedTasks.find((task) => task.id === taskId);
-    if (!taskToUpdate) return;
-
-    taskToUpdate.done = !taskToUpdate.done;
-
-    // Update local storage
-    localStorage.setItem("taskNames", JSON.stringify(storedTasks));
-
-    // Update state based on task's done status
-    if (taskToUpdate.done) {
-      // Move task to "Done" column
-      setDoneTasks((prevDoneTasks) => [...prevDoneTasks, taskToUpdate]);
-      setTodoTasks((prevTodoTasks) =>
-        prevTodoTasks.filter((task) => task.id !== taskId)
-      );
-    } else {
-      // Move task back to "Current" column
-      setTodoTasks((prevTodoTasks) => [...prevTodoTasks, taskToUpdate]);
-      setDoneTasks((prevDoneTasks) =>
-        prevDoneTasks.filter((task) => task.id !== taskId)
-      );
-    }
+  // Toggle Status
+  const handleToggleStatus = (id) => {
+    const newTasks = allTasks.map((task) => {
+      if (task.id === id) {
+        return { ...task, done: !task.done };
+      }
+      return task;
+    });
+    setAllTasks(newTasks);
+    localStorage.setItem("tasks", JSON.stringify(newTasks));
   };
 
-  // Update label class based on task's done status
-  const renderLabelClass = (task) => {
-    console.log("Task Done Status:", task.done);
-    const labelClass = task.done
-      ? "form-check-label done-task"
-      : "form-check-label";
-    console.log("Label Class:", labelClass);
-    return labelClass;
+  // Handle task status toggle
+  const handleSelectedId = (id, name) => {
+    setCurrentTaskId(id);
+    setTaskName(name);
   };
 
-  //Local Storage
-  const handleSubmit = () => {
-    if (taskName.trim() !== "") {
-      const taskId = Math.floor(100 + Math.random() * 900); // Generate a unique timestamp-based ID
-      const updatedTask = { id: taskId, name: taskName, done: false };
-
-      // Add the new task to the appropriate array based on its done status
-      const updatedTodoTasks = [...todoTasks, updatedTask];
-      const updatedDoneTasks = [...doneTasks];
-
-      localStorage.setItem(
-        "taskNames",
-        JSON.stringify([...updatedTodoTasks, ...updatedDoneTasks])
-      );
-      setTaskName("");
-      setModalOpen(false);
-      setTodoTasks(updatedTodoTasks);
-      closeModal();
-    } else {
-      alert("Task name cannot be empty.");
-    }
+  // Two way binding for task name input
+  const handleTaskNameChange = (e) => {
+    setTaskName(e.target.value);
   };
 
   const openModal = () => {
@@ -137,6 +108,18 @@ export default function App() {
     document.getElementById("closeAdd").click();
   };
 
+  const handleDoneAllChange = () => {
+    setDoneAllChecked(!doneAllChecked);
+    if (!doneAllChecked) {
+      const newTasks = todoTasks.map((task) => ({ ...task, done: true }));
+      setAllTasks(newTasks.concat(doneTasks));
+      localStorage.setItem("tasks", JSON.stringify(newTasks.concat(doneTasks)));
+    } else {
+      const newTasks = todoTasks.map((task) => ({ ...task, done: false }));
+      setAllTasks(newTasks.concat(doneTasks));
+      localStorage.setItem("tasks", JSON.stringify(newTasks.concat(doneTasks)));
+    }
+  };
   return (
     <div className="container">
       {/* Add new Task Modal */}
@@ -195,17 +178,35 @@ export default function App() {
       >
         <p>Are you sure you want to delete?</p>
       </Modal>
-      {/* Delete All Task Modal */}
+      {/* Delete All Current Modal */}
       <Modal
-        id="deleteAllModal"
-        title="Delete All Task"
+        id="deleteAllCurrentModal"
+        title="Delete All Current Tasks"
         color="danger"
         buttonName="Delete"
+        closeBtn="closeDeleteAllCurrent"
         onClick={() => {
-          alert("Deleted");
+          setAllTasks(doneTasks);
+          localStorage.setItem("tasks", JSON.stringify(doneTasks));
+          document.getElementById("closeDeleteAllCurrent").click();
         }}
       >
-        <p>Are you sure you want to delete all?</p>
+        <p>Are you sure you want to delete all current tasks?</p>
+      </Modal>
+      {/* Delete All Done Modal */}
+      <Modal
+        id="deleteAllDoneModal"
+        title="Delete All Done Tasks"
+        color="danger"
+        buttonName="Delete"
+        closeBtn="closeDeleteAllDone"
+        onClick={() => {
+          setAllTasks(todoTasks);
+          localStorage.setItem("tasks", JSON.stringify(todoTasks));
+          document.getElementById("closeDeleteAllDone").click();
+        }}
+      >
+        <p>Are you sure you want to delete all done tasks?</p>
       </Modal>
       <div
         className="navbar d-flex justify-content-between align-items-center"
@@ -268,20 +269,23 @@ export default function App() {
                       <input
                         className="form-check-input mb-1"
                         type="checkbox"
-                        id="task2Checkbox"
+                        id="doneAllCheckbox"
+                        checked={doneAllChecked}
+                        onChange={handleDoneAllChange}
                       />
                       <label
                         className="form-check-label ms-2"
-                        htmlFor="task2Checkbox"
+                        htmlFor="doneAllCheckbox"
                       >
                         Done All
                       </label>
                     </div>
                     <button
+                      id="deleteAllCurrentModal"
                       type="button"
-                      className="btn ms-2"
+                      className="btn btn"
                       data-bs-toggle="modal"
-                      data-bs-target="#deleteAllModal"
+                      data-bs-target="#deleteAllCurrentModal"
                     >
                       <img
                         src={Icons.DeleteAllIcon}
@@ -317,7 +321,7 @@ export default function App() {
                         />
 
                         <label
-                          className={renderLabelClass(task)}
+                          className={task}
                           htmlFor={`task${task.id || index}Checkbox`}
                         >
                           {task.name}
@@ -369,11 +373,11 @@ export default function App() {
                   <h4>Done</h4>
                   <div className="d-flex align-items-center m-0">
                     <button
+                      id="deleteAllDoneModal"
                       type="button"
-                      className="btn ms-2"
+                      className="btn btn"
                       data-bs-toggle="modal"
-                      data-bs-target="#deleteAllModal"
-                      onClick={() => handleSelectedId(task.id, task.name)}
+                      data-bs-target="#deleteAllDoneModal"
                     >
                       <img
                         src={Icons.DeleteAllIcon}
