@@ -25,7 +25,6 @@ const Modals = ({
                 className="btn btn-secondary"
                 data-bs-dismiss="modal"
                 id={closeBtn}
-                onClick={(e) => clearTaskName()}
               >
                 Cancel
               </button>
