@@ -6,6 +6,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import Modal from "./components/modals/Modals.jsx";
 import "bootstrap/dist/js/bootstrap.min.js";
 import { Icons } from "./assets/Icons.jsx";
+import { TaskContext } from "./components/taskContext.js";
 
 export default function App() {
   const [allTasks, setAllTasks] = useState([]); // All tasks
@@ -93,7 +94,7 @@ export default function App() {
   // Handle task status toggle
   const handleSelectedId = (id, name) => {
     setCurrentTaskId(id);
-    setTaskName(name);
+    setSelectedTask(name);
   };
 
   const openModal = () => {
@@ -120,92 +121,94 @@ export default function App() {
     <div className="container">
       {/* -------All Modals Starts Here------- */}
       {/* Add new Task Modal */}
-      <Modal
-        id="createModal"
-        title="Add New Task"
-        color="success"
-        buttonName="Save"
-        onClick={handleSubmit}
-        onHide={closeModal}
-        show={modalOpen}
-        closeBtn="closeAdd"
-      >
-        <input
-          type="text"
-          value={taskName} // Binding the input value to taskName state
-          onChange={(e) => setTaskName(e.target.value)} // Handling input change event
-          className="form-control"
-        />
-      </Modal>
-      {/* Update Task Modal */}
-      <Modal
-        id="updateModal"
-        title="Edit Task"
-        color="success"
-        buttonName="Update"
-        onClick={handleUpdate} // Pass taskId and taskName
-        onClose={(e) => setTaskName("")}
-        closeBtn="updated"
-      >
-        <input
-          type="text"
-          value={selectedTask} // Display current task name in the input field
-          onChange={(e) => setSelectedTask(e.target.value)} // Update taskName state
-          className="form-control"
-        />
-      </Modal>
-      {/* Delete Current Task Modal */}
-      <Modal
-        id="deleteModal"
-        title="Delete Task"
-        color="danger"
-        buttonName="Delete"
-        onClick={handleDeleted}
-        closeBtn="closeDelete"
-      >
-        <p>Are you sure you want to delete?</p>
-      </Modal>
-      {/* Delete Done Task Modal */}
-      <Modal
-        id="deleteModalDone"
-        title="Delete Task"
-        color="danger"
-        buttonName="Delete"
-        onClick={handleDeletedDone}
-        closeBtn="closeDeleteDone"
-      >
-        <p>Are you sure you want to delete?</p>
-      </Modal>
-      {/* Delete All Current Modal */}
-      <Modal
-        id="deleteAllCurrentModal"
-        title="Delete All Current Tasks"
-        color="danger"
-        buttonName="Delete"
-        closeBtn="closeDeleteAllCurrent"
-        onClick={() => {
-          setAllTasks(doneTasks);
-          localStorage.setItem("tasks", JSON.stringify(doneTasks));
-          document.getElementById("closeDeleteAllCurrent").click();
-        }}
-      >
-        <p>Are you sure you want to delete all current tasks?</p>
-      </Modal>
-      {/* Delete All Done Modal */}
-      <Modal
-        id="deleteAllDoneModal"
-        title="Delete All Done Tasks"
-        color="danger"
-        buttonName="Delete"
-        closeBtn="closeDeleteAllDone"
-        onClick={() => {
-          setAllTasks(todoTasks);
-          localStorage.setItem("tasks", JSON.stringify(todoTasks));
-          document.getElementById("closeDeleteAllDone").click();
-        }}
-      >
-        <p>Are you sure you want to delete all done tasks?</p>
-      </Modal>
+      <TaskContext.Provider value={{ setTaskName }}>
+        <Modal
+          id="createModal"
+          title="Add New Task"
+          color="success"
+          buttonName="Save"
+          onClick={handleSubmit}
+          onHide={closeModal}
+          show={modalOpen}
+          closeBtn="closeAdd"
+        >
+          <input
+            type="text"
+            value={taskName} // Binding the input value to taskName state
+            onChange={(e) => setTaskName(e.target.value)} // Handling input change event
+            className="form-control"
+          />
+        </Modal>
+        {/* Update Task Modal */}
+        <Modal
+          id="updateModal"
+          title="Edit Task"
+          color="success"
+          buttonName="Update"
+          onClick={handleUpdate} // Pass taskId and taskName
+          onClose={(e) => setTaskName("")}
+          closeBtn="updated"
+        >
+          <input
+            type="text"
+            value={selectedTask} // Display current task name in the input field
+            onChange={(e) => setSelectedTask(e.target.value)} // Update taskName state
+            className="form-control"
+          />
+        </Modal>
+        {/* Delete Current Task Modal */}
+        <Modal
+          id="deleteModal"
+          title="Delete Task"
+          color="danger"
+          buttonName="Delete"
+          onClick={handleDeleted}
+          closeBtn="closeDelete"
+        >
+          <p>Are you sure you want to delete?</p>
+        </Modal>
+        {/* Delete Done Task Modal */}
+        <Modal
+          id="deleteModalDone"
+          title="Delete Task"
+          color="danger"
+          buttonName="Delete"
+          onClick={handleDeletedDone}
+          closeBtn="closeDeleteDone"
+        >
+          <p>Are you sure you want to delete?</p>
+        </Modal>
+        {/* Delete All Current Modal */}
+        <Modal
+          id="deleteAllCurrentModal"
+          title="Delete All Current Tasks"
+          color="danger"
+          buttonName="Delete"
+          closeBtn="closeDeleteAllCurrent"
+          onClick={() => {
+            setAllTasks(doneTasks);
+            localStorage.setItem("tasks", JSON.stringify(doneTasks));
+            document.getElementById("closeDeleteAllCurrent").click();
+          }}
+        >
+          <p>Are you sure you want to delete all current tasks?</p>
+        </Modal>
+        {/* Delete All Done Modal */}
+        <Modal
+          id="deleteAllDoneModal"
+          title="Delete All Done Tasks"
+          color="danger"
+          buttonName="Delete"
+          closeBtn="closeDeleteAllDone"
+          onClick={() => {
+            setAllTasks(todoTasks);
+            localStorage.setItem("tasks", JSON.stringify(todoTasks));
+            document.getElementById("closeDeleteAllDone").click();
+          }}
+        >
+          <p>Are you sure you want to delete all done tasks?</p>
+        </Modal>
+      </TaskContext.Provider>
       {/* -------All Modals Ends Here------- */}
 
       {/* -------Header------- */}
